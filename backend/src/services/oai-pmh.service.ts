@@ -128,6 +128,7 @@ export class OaiPmhService {
     }
 
     const url = `${this.endpoint}?${params.toString()}`;
+    console.log(`URL is ${url}`)
     return url;
   }
 
