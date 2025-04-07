@@ -1,20 +1,23 @@
 {
-  "name": "rara-ai-postcard-frontend",
-  "version": "1.0.0",
+  "name": "postcard-ai-interface",
+  "version": "0.1.0",
   "description": "Frontend for RaRa AI Postcard Generation",
-  "main": "src/index.ts",
+  "main": "index.js",
   "scripts": {
-    "start": "tsc && serve",
-    "build": "tsc",
-    "watch": "tsc -w"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "lit": "^3.1.2",
-    "@material/web": "^1.2.0"
+    "@lit/reactive-element": "^2.0.0",
+    "@lit/task": "^1.0.0",
+    "lit": "^3.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/node": "^20.11.16",
-    "serve": "^14.2.1"
+    "typescript": "^5.0.0",
+    "vite": "^5.4.17"
   }
-} 
+}
+
+
+

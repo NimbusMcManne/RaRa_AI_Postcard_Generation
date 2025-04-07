@@ -4,10 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RaRa AI Postcard Generator</title>
-    <link rel="stylesheet" href="/src/styles/global.css" />
+    <!-- Add Material Design Web Components -->
+    <script type="module" src="/src/components/app.ts"></script>
+    <style>
+      body { margin: 0; font-family: sans-serif; }
+    </style>
   </head>
   <body>
-    <rara-app></rara-app>
-    <script type="module" src="/dist/index.js"></script>
+    <rara-app>Loading application...</rara-app>
   </body>
 </html> 
