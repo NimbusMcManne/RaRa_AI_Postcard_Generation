@@ -37,14 +37,12 @@ export class ImageUpload extends LitElement {
     if (input.files && input.files[0]) {
       const file = input.files[0];
 
-      // Create a preview URL
       const reader = new FileReader();
       reader.onload = () => {
         this.previewURL = reader.result as string;
       }
       reader.readAsDataURL(file);
 
-      // Dispatch an event with the file object
       this.dispatchEvent(new CustomEvent('image-selected', {
         detail: { file },
         bubbles: true,
