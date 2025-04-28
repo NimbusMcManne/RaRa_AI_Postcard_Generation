@@ -1,0 +1,42 @@
+# AI Service Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+
+model:
+  # Style transfer configuration
+  style_transfer:
+    num_reference_images: 3
+    content_weight: 1.0
+    style_weight: 1.0
+    batch_size: 1
+
+  # Feature extraction configuration
+  feature_extraction:
+    model_name: "vgg19"
+    layers:
+      - "conv1_1"
+      - "conv2_1"
+      - "conv3_1"
+      - "conv4_1"
+      - "conv5_1"
+
+# Data paths
+paths:
+  period_mapped_data: "../data_processing/data/period-mapped/period_mapped_data.json"
+  model_weights: "./models/weights"
+  temp_storage: "./temp"
+
+# Processing settings
+processing:
+  max_image_size: 1024
+  output_size: 800
+  jpeg_quality: 90
+
+# Cache settings
+cache:
+  enabled: true
+  max_size: 100
+  expiry_minutes: 60

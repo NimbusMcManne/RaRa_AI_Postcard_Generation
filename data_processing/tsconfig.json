@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "es2020",                                 
+    "lib": ["es2020"],                                   
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "baseUrl": "./",                                    
+    "paths": {
+      "@/*": ["src/*"]                                
+    },
+    "rootDir": "./src",                               
+    "outDir": "./dist",                         
+    "allowImportingTsExtensions": true,               
+    "resolveJsonModule": true,                                      
+    "noEmit": true,                                 
+    "sourceMap": true,                                 
+    "removeComments": false,                           
+    "esModuleInterop": true,                          
+    
+    "forceConsistentCasingInFileNames": true,        
+
+    "strict": true,                                     
+    "noImplicitAny": true,                             
+    "strictNullChecks": true,                       
+    "noUnusedLocals": true,                           
+    "noUnusedParameters": true,                        
+    "noImplicitReturns": true,                      
+    "skipLibCheck": true                              
+  },
+  "include": [
+    "src/**/*"                                     
+  ],
+  "exclude": [
+    "node_modules",                                
+    "dist",                                        
+    "**/*.test.ts"                               
+  ]
+}
