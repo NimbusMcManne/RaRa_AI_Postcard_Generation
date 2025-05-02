@@ -19,7 +19,8 @@
     "es2020": true
   },
   "rules": {
-    "@typescript-eslint/no-non-null-assertion": "off", 
-    "@typescript-eslint/no-explicit-any": "warn" 
+    // Optional: Add custom rules or overrides here
+    "@typescript-eslint/no-non-null-assertion": "off", // Allow non-null assertions (e.g., for @query)
+    "@typescript-eslint/no-explicit-any": "warn" // Warn about using 'any' type
   }
 }

@@ -1,3 +1,4 @@
+// Period enumeration
 export enum HistoricalPeriod {
   EARLY_POSTCARDS = "1894_1905",
   CZARIST_ERA = "1906_1917",
@@ -13,6 +14,7 @@ export enum HistoricalPeriod {
   CONTEMPORARY = "2003_present"
 }
 
+// Content category enumeration
 export enum ContentCategory {
   DRAWN_SCENERY = "drawn_scenery",
   PHOTO_SCENERY = "photo_scenery",
@@ -24,13 +26,15 @@ export enum ContentCategory {
   PHOTO_MISC = "photo_misc"
 }
 
+// Visual characteristics interface
 export interface VisualCharacteristics {
+  // Color-related characteristics
   colorAnalysis?: {
-    dominantColors?: string[]; 
+    dominantColors?: string[];      // RGB values
     colorScheme?: 'monochrome' | 'sepia' | 'color';
-    contrast?: number;             
-    brightness?: number;          
-    saturation?: number;         
+    contrast?: number;              // 0-1 scale
+    brightness?: number;            // 0-1 scale
+    saturation?: number;           // 0-1 scale
     colorPalette?: {
       primary: string[];
       secondary: string[];
@@ -38,23 +42,25 @@ export interface VisualCharacteristics {
     };
   };
 
+  // Composition analysis
   compositionAnalysis?: {
     layout?: 'centered' | 'rule-of-thirds' | 'symmetric' | 'other';
     mainSubjectLocation?: { x: number; y: number };
-    complexityScore?: number;   
+    complexityScore?: number;      // 0-1 scale
     depthOfField?: 'shallow' | 'medium' | 'deep';
     perspective?: 'frontal' | 'angular' | 'aerial' | 'other';
     focusPoints?: Array<{ x: number; y: number }>;
   };
 
+  // Technical characteristics
   technicalCharacteristics?: {
     grainPattern?: string;
     printTechnique?: string;
     textureType?: string;
-    quality?: number;            
+    quality?: number;              // 0-1 scale
     degradation?: {
-      type?: string[];         
-      severity?: number;       
+      type?: string[];            // e.g., ['fading', 'scratches', 'yellowing']
+      severity?: number;          // 0-1 scale
     };
     edges?: {
       condition?: 'sharp' | 'worn' | 'damaged';
@@ -62,13 +68,15 @@ export interface VisualCharacteristics {
     };
   };
 
+  // Style metrics
   styleMetrics?: {
-    vintage?: number;         
-    clarity?: number;    
-    artifactPresence?: number; 
-    styleConfidence?: number;  
+    vintage?: number;             // 0-1 score
+    clarity?: number;             // 0-1 score
+    artifactPresence?: number;    // 0-1 score
+    styleConfidence?: number;     // How confident the AI is about the style classification
   };
 
+  // Additional artistic elements
   artisticElements?: {
     borderType?: string;
     textElements?: {
@@ -80,6 +88,7 @@ export interface VisualCharacteristics {
   };
 }
 
+// Period metadata interface
 export interface PeriodMetadata {
   id: HistoricalPeriod;
   name: {
@@ -96,20 +105,22 @@ export interface PeriodMetadata {
   };
 }
 
+// Date mapping interface
 export interface DateMapping {
   rawDate: string;
   mappedPeriod: HistoricalPeriod;
-  potentialPeriods?: HistoricalPeriod[]; 
+  potentialPeriods?: HistoricalPeriod[];  // For dates spanning multiple periods
   confidence: 'high' | 'medium' | 'low';
   reasoning?: string;
   visualVerification?: {
     suggestedPeriod?: HistoricalPeriod;
     confidence: 'high' | 'medium' | 'low';
-    characteristics: string[]; 
-    needsReview: boolean;   
+    characteristics: string[];  // Visual cues that suggest this period
+    needsReview: boolean;      // Flag for cases where date and visual evidence conflict
   };
 }
 
+// Main period-mapped data interface
 export interface PeriodMappedData {
   metadata: {
     lastUpdated: string;
@@ -122,7 +133,7 @@ export interface PeriodMappedData {
       metadata: PeriodMetadata;
       categories: {
         [key in ContentCategory]: {
-          records: string[]; 
+          records: string[];  // Array of postcard identifiers
           count: number;
           visualCharacteristics?: {
             common: {
@@ -133,7 +144,7 @@ export interface PeriodMappedData {
               artisticElements?: VisualCharacteristics['artisticElements'];
             };
             variations: {
-              [key: string]: number; 
+              [key: string]: number;  // frequency of different characteristics
             };
           };
         };
@@ -147,6 +158,7 @@ export interface PeriodMappedData {
     };
   };
 
+  // Quick lookup index
   index: {
     [postcardId: string]: {
       period: HistoricalPeriod;

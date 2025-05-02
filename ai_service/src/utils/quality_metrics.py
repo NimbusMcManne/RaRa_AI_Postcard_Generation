@@ -5,11 +5,14 @@ Implements various metrics for evaluating transformation quality and performance
 
 import torch
 import torch.nn.functional as F
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 import time
 import psutil
 import numpy as np
+import logging
 from .image_processing import ImageProcessor
+
+logger = logging.getLogger(__name__)
 
 class QualityMetrics:
     """Quality assessment tools for style transfer."""
@@ -41,9 +44,11 @@ class QualityMetrics:
         original = original.to(self.device)
         transformed = transformed.to(self.device)
 
+        # Convert to luminance
         original_y = 0.299 * original[:, 0] + 0.587 * original[:, 1] + 0.114 * original[:, 2]
         transformed_y = 0.299 * transformed[:, 0] + 0.587 * transformed[:, 1] + 0.114 * transformed[:, 2]
 
+        # Compute SSIM
         c1 = (0.01 * 255) ** 2
         c2 = (0.03 * 255) ** 2
 
@@ -76,14 +81,17 @@ class QualityMetrics:
         Returns:
             Style consistency score (0-1)
         """
+        # Extract features
         style_features = feature_extractor(style)
         transformed_features = feature_extractor(transformed)
 
+        # Compute Gram matrix differences
         consistency_scores = []
         for layer in feature_extractor.get_selected_layers():
             style_gram = feature_extractor.gram_matrix(style_features[layer])
             transformed_gram = feature_extractor.gram_matrix(transformed_features[layer])
 
+            # Normalize and compute similarity
             style_norm = torch.norm(style_gram)
             transformed_norm = torch.norm(transformed_gram)
 
@@ -91,6 +99,9 @@ class QualityMetrics:
                 similarity = torch.sum(style_gram * transformed_gram) / (style_norm * transformed_norm)
                 consistency_scores.append(similarity.item())
 
+        # Handle case where no valid scores were computed
+        if not consistency_scores:
+            return 0.0
         return np.mean(consistency_scores)
 
     def measure_performance(
@@ -111,14 +122,15 @@ class QualityMetrics:
             Dictionary of performance metrics
         """
         start_time = time.time()
-        start_memory = psutil.Process().memory_info().rss / 1024 / 1024  
+        start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
 
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
-            start_gpu = torch.cuda.memory_allocated() / 1024 / 1024  
+            start_gpu = torch.cuda.memory_allocated() / 1024 / 1024  # MB
 
         result = func(*args, **kwargs)
 
+        # Compute metrics
         end_time = time.time()
         end_memory = psutil.Process().memory_info().rss / 1024 / 1024
 
@@ -140,7 +152,7 @@ class QualityMetrics:
     def assess_quality(
         self,
         content_image: torch.Tensor,
-        style_image: torch.Tensor,
+        style_images: List[torch.Tensor],
         transformed_image: torch.Tensor,
         feature_extractor,
         loss_history: Optional[Dict] = None
@@ -150,7 +162,7 @@ class QualityMetrics:
 
         Args:
             content_image: Original content image tensor
-            style_image: Style image tensor
+            style_images: List of style image tensors
             transformed_image: Transformed image tensor
             feature_extractor: VGG feature extractor
             loss_history: Optional optimization history
@@ -158,13 +170,31 @@ class QualityMetrics:
         Returns:
             Dictionary of quality metrics
         """
+        if not style_images:
+            logger.warning("No style images provided for quality assessment.")
+            avg_style_consistency = 0.0
+        else:
+            # Calculate style consistency against each reference and average
+            all_consistencies = []
+            for style_image in style_images:
+                consistency = self.compute_style_consistency(
+                    style_image, transformed_image, feature_extractor
+                )
+                all_consistencies.append(consistency)
+
+            valid_consistencies = [c for c in all_consistencies if not np.isnan(c)]
+            avg_style_consistency = np.mean(valid_consistencies) if valid_consistencies else 0.0
+
+        content_similarity_score = self.compute_content_similarity(
+            content_image, transformed_image
+        )
+        if np.isnan(content_similarity_score):
+            logger.warning("Content similarity resulted in NaN, replacing with 0.0")
+            content_similarity_score = 0.0
+
         metrics = {
-            'content_similarity': self.compute_content_similarity(
-                content_image, transformed_image
-            ),
-            'style_consistency': self.compute_style_consistency(
-                style_image, transformed_image, feature_extractor
-            )
+            'content_similarity': content_similarity_score,
+            'style_consistency_avg': avg_style_consistency
         }
 
         if loss_history:

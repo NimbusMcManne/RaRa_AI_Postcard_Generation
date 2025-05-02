@@ -18,6 +18,7 @@ class TestImageProcessor(unittest.TestCase):
         cls.test_dir = Path(__file__).parent / "test_data"
         cls.test_dir.mkdir(exist_ok=True)
 
+        # Create a test image
         cls.test_image = Image.new('RGB', (800, 600), color='red')
         cls.test_image_path = cls.test_dir / "test_image.jpg"
         cls.test_image.save(cls.test_image_path)
@@ -33,6 +34,7 @@ class TestImageProcessor(unittest.TestCase):
         max_dim = max(resized.size)
         self.assertLessEqual(max_dim, self.processor.max_image_size)
 
+        # Test aspect ratio preservation
         original_ratio = self.test_image.size[0] / self.test_image.size[1]
         resized_ratio = resized.size[0] / resized.size[1]
         self.assertAlmostEqual(original_ratio, resized_ratio, places=2)
@@ -43,12 +45,12 @@ class TestImageProcessor(unittest.TestCase):
 
         self.assertIsInstance(image, Image.Image)
         self.assertIsInstance(tensor, torch.Tensor)
-        self.assertEqual(tensor.dim(), 4)  
-        self.assertEqual(tensor.size(1), 3)  
+        self.assertEqual(tensor.dim(), 4)
+        self.assertEqual(tensor.size(1), 3)
 
     def test_tensor_to_image(self):
         """Test tensor to image conversion."""
-        test_tensor = torch.ones(3, 64, 64)  
+        test_tensor = torch.ones(3, 64, 64)
         image = self.processor.tensor_to_image(test_tensor)
 
         self.assertIsInstance(image, Image.Image)
@@ -57,12 +59,12 @@ class TestImageProcessor(unittest.TestCase):
 
     def test_prepare_batch(self):
         """Test batch preparation."""
-        images = [self.test_image] * 3  
+        images = [self.test_image] * 3
         batch = self.processor.prepare_batch(images)
 
-        self.assertEqual(batch.dim(), 4)  
-        self.assertEqual(batch.size(0), 3) 
-        self.assertEqual(batch.size(1), 3) 
+        self.assertEqual(batch.dim(), 4)
+        self.assertEqual(batch.size(0), 3)
+        self.assertEqual(batch.size(1), 3)
 
     def test_save_image(self):
         """Test image saving functionality."""

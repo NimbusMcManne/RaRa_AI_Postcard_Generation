@@ -18,6 +18,9 @@ export class StorageService {
     this.baseDir = mergedOptions.storagePath;
   }
 
+  /**
+   * Ensure a directory exists, create if it doesn't
+   */
   async ensureDirectory(dirPath: string): Promise<void> {
     try {
       await fs.mkdir(dirPath, { recursive: true });
@@ -27,6 +30,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * Save JSON data to a file
+   */
   async saveJson(filePath: string, data: any): Promise<void> {
     try {
       await fs.writeFile(filePath, JSON.stringify(data, null, 2));
@@ -36,6 +42,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * Clean up old data before a new harvest
+   */
   async cleanupOldData(): Promise<void> {
     try {
       await fs.rm(this.baseDir, { recursive: true, force: true });
@@ -46,6 +55,9 @@ export class StorageService {
     }
   }
 
+  /**
+   * Save raw harvest data in chunks
+   */
   async saveRawHarvest(records: any[]): Promise<void> {
     const CHUNK_SIZE = 100;
     const chunks = [];
@@ -74,6 +86,9 @@ export class StorageService {
     );
   }
 
+  /**
+   * Save normalized records with metadata
+   */
   async saveNormalizedRecords(records: any[]): Promise<void> {
     const CHUNK_SIZE = 100;
     const chunks = [];

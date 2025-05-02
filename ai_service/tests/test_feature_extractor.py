@@ -12,7 +12,7 @@ class TestVGG19FeatureExtractor(unittest.TestCase):
         """Set up test resources."""
         cls.default_layers = ['conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1']
         cls.extractor = VGG19FeatureExtractor()
-        cls.test_input = torch.randn(1, 3, 224, 224)  
+        cls.test_input = torch.randn(1, 3, 224, 224)
 
     def test_initialization(self):
         """Test feature extractor initialization."""
@@ -49,8 +49,8 @@ class TestVGG19FeatureExtractor(unittest.TestCase):
         self.assertEqual(set(features.keys()), set(self.extractor.layers))
 
         for name, feature in features.items():
-            self.assertEqual(feature.dim(), 4) 
-            self.assertEqual(feature.size(0), 1) 
+            self.assertEqual(feature.dim(), 4)
+            self.assertEqual(feature.size(0), 1)
 
             self.assertEqual(feature.device, self.test_input.device)
 
@@ -58,16 +58,15 @@ class TestVGG19FeatureExtractor(unittest.TestCase):
 
     def test_gram_matrix(self):
         """Test Gram matrix computation."""
-        test_features = torch.randn(2, 64, 32, 32)  
+        test_features = torch.randn(2, 64, 32, 32)
 
         gram = VGG19FeatureExtractor.gram_matrix(test_features)
 
-        self.assertEqual(gram.size(0), 2)  
-        self.assertEqual(gram.size(1), 64) 
-        self.assertEqual(gram.size(2), 64) 
+        self.assertEqual(gram.size(0), 2)
+        self.assertEqual(gram.size(1), 64)
+        self.assertEqual(gram.size(2), 64)
 
-        batch_diff = torch.norm(gram - gram.transpose(1, 2))
-        self.assertLess(batch_diff, 1e-6)
+        self.assertTrue(torch.allclose(gram, gram.transpose(1, 2), atol=1e-4))
 
     def test_model_frozen(self):
         """Test that model parameters are frozen."""

@@ -35,6 +35,42 @@ processing:
   output_size: 800
   jpeg_quality: 90
 
+# Tuning parameters for Style Transfer
+tuning:
+  # Weight for matching the content image structure.
+  # Higher values prioritize preserving the original photo's shapes and objects.
+  # Typical range relative to style_weight. If style_weight is 1e6, content might be 1 to 100.
+  content_weight: 1.0
+
+  # Weight for matching the style image texture/patterns.
+  # Higher values make the output look more like the style image.
+  # Often significantly higher than content_weight (e.g., 1e4 to 1e7). Too high can destroy content.
+  style_weight: 1000000.0 # Example: 1e6
+
+  # Weight for image smoothness regularization (Total Variation Loss).
+  # Higher values create smoother, more "painted" results, reducing noise but also detail.
+  # Usually small (e.g., 1e-6 to 1e-4). Too high causes blurriness.
+  tv_weight: 0.000001 # Example: 1e-6
+
+  # Number of optimization iterations.
+  # More steps allow finer adjustments towards the target loss, but take longer.
+  # Typical range: 100-500. Fewer steps = faster, closer to content image.
+  num_steps: 300
+
+  # VGG19 layers used for content loss.
+  # Deeper layers (like conv4_2) capture more semantic structure.
+  # Using earlier layers (e.g., conv3_2) preserves more fine detail but less overall structure.
+  content_layers: [conv4_2]
+
+  # VGG19 layers used for style loss.
+  # Using multiple layers captures style textures/patterns at different scales.
+  # Standard set provides a good balance.
+  style_layers: [conv1_1, conv2_1, conv3_1, conv4_1, conv5_1]
+
+# Cloud service settings (Optional)
+cloud_service:
+  keras_space_url: "https://keras-io-neural-style-transfer.hf.space/run/predict"
+
 # Cache settings
 cache:
   enabled: true

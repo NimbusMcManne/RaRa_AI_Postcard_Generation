@@ -12,6 +12,7 @@ import logging
 import shutil
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from .services.transform_service import TransformationService
 
@@ -26,7 +27,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],  # In production, replace with specific origins!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,20 +70,24 @@ async def root():
 @app.post("/transform")
 async def transform_image(
     content_image: UploadFile = File(...),
-    style_image: UploadFile = File(...),
-    style_weight: float = Form(1e6),
-    content_weight: float = Form(1.0),
-    num_steps: int = Form(300)
+    period_id: str = Form(...),
+    category_id: str = Form(...),
+    style_weight: Optional[float] = Form(None),
+    content_weight: Optional[float] = Form(None),
+    num_steps: Optional[int] = Form(None),
+    processing_mode: str = Form("local")
 ):
     """
-    Transform a content image using the style of another image.
+    Transform a content image using a style selected by period and category.
 
     Args:
         content_image: Content image file
-        style_image: Style image file
+        period_id: ID of the selected historical period
+        category_id: ID of the selected style category
         style_weight: Weight for style loss
         content_weight: Weight for content loss
         num_steps: Number of optimization steps
+        processing_mode: 'local' or 'cloud'
 
     Returns:
         JSON response with transformation results and output image path
@@ -90,34 +95,36 @@ async def transform_image(
     try:
         process_id = str(uuid.uuid4())
         content_path = UPLOAD_DIR / f"content_{process_id}.jpg"
-        style_path = UPLOAD_DIR / f"style_{process_id}.jpg"
         result_path = RESULT_DIR / f"result_{process_id}.jpg"
 
-        logger.info("Saving uploaded files")
+        logger.info("Saving uploaded content image")
         with content_path.open("wb") as f:
             shutil.copyfileobj(content_image.file, f)
-        with style_path.open("wb") as f:
-            shutil.copyfileobj(style_image.file, f)
 
-        logger.info("Starting transformation")
+        # Process images using IDs
+        logger.info(f"Starting transformation for period: {period_id}, category: {category_id}")
         result = await transform_service.transform_image(
             content_path=content_path,
-            style_path=style_path,
+            period_id=period_id,
+            category_id=category_id,
             output_path=result_path,
             style_weight=style_weight,
             content_weight=content_weight,
-            num_steps=num_steps
+            num_steps=num_steps,
+            processing_mode=processing_mode
         )
 
         result["result_path"] = str(result_path)
+        result["result_id"] = process_id
 
         content_path.unlink()
-        style_path.unlink()
 
         return JSONResponse(content=result)
 
     except Exception as e:
         logger.error(f"Transformation failed: {str(e)}")
+        if 'content_path' in locals() and content_path.exists():
+            content_path.unlink()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/result/{process_id}")

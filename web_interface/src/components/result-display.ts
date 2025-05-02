@@ -1,7 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
-
 @customElement('result-display')
 export class ResultDisplay extends LitElement {
   static styles = css`
@@ -21,7 +20,7 @@ export class ResultDisplay extends LitElement {
         align-items: center;
         justify-content: center;
         color: #666;
-        background-color: #f9f9f9; 
+        background-color: #f9f9f9; /* Reverted to f9f9f9 from diff */
          border-radius: 4px;
     }
   `;

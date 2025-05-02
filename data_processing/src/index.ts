@@ -2,13 +2,12 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-
 import stylesRouter from './routes/styles.routes';
 
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3001; 
+const port = process.env.PORT || 3001;
 
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000'];
 const corsOptions: cors.CorsOptions = {
@@ -20,7 +19,7 @@ const corsOptions: cors.CorsOptions = {
     }
     return callback(null, true);
   },
-  credentials: true, 
+  credentials: true,
 };
 app.use(cors(corsOptions));
 

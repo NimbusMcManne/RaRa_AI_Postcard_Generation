@@ -53,6 +53,7 @@ function generateStats(records: NormalizedPostcard[], mappingService: PeriodMapp
     stats.byCategory[category]++;
 
     stats.confidenceLevels[periodMapping.confidence]++;
+    stats.confidenceLevels[periodMapping.confidence]++;
 
     if (periodMapping.visualVerification) {
       stats.visualVerification.total++;

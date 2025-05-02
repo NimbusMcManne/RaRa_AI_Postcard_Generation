@@ -14,6 +14,9 @@ export class HarvesterService {
     this.transformer = new TransformerService();
   }
 
+  /**
+   * Main harvesting process
+   */
   async harvestData(options: {
     batchSize?: number;
     saveRawData?: boolean;
@@ -24,6 +27,7 @@ export class HarvesterService {
     } = options;
 
     try {
+      // Phase 1: Fetch and store raw data
       console.log('Starting data harvest...');
       const records = await this.oaiPmh.harvest({ batchSize });
 
@@ -31,6 +35,7 @@ export class HarvesterService {
         await this.storage.saveRawHarvest(records);
       }
 
+      // Phase 2: Transform and store normalized data
       const normalizedRecords = await this.transformAndSave(records);
 
       console.log(`Harvest completed. Processed ${normalizedRecords.length} records.`);
@@ -40,6 +45,9 @@ export class HarvesterService {
     }
   }
 
+  /**
+   * Transform raw records to normalized format and save
+   */
   private async transformAndSave(records: OaiPmhRecord[]): Promise<NormalizedPostcard[]> {
     const normalizedRecords: NormalizedPostcard[] = [];
     const warnings: string[] = [];

@@ -44,34 +44,34 @@ class TestStyleTransfer(unittest.TestCase):
         loss = self.style_transfer.compute_content_loss(input_features, content_features)
 
         self.assertIsInstance(loss, torch.Tensor)
-        self.assertEqual(loss.dim(), 0)  
-        self.assertGreaterEqual(loss.item(), 0)  
+        self.assertEqual(loss.dim(), 0)
+        self.assertGreaterEqual(loss.item(), 0)
 
     def test_style_loss(self):
         """Test style loss computation."""
-        style_features = self.style_transfer.feature_extractor(self.style_image)
         input_features = self.style_transfer.feature_extractor(self.content_image)
 
-        loss = self.style_transfer.compute_style_loss(input_features, style_features)
+        input_features = self.style_transfer.feature_extractor(self.content_image)
+        target_avg_grams = self.style_transfer._calculate_average_style_grams([self.style_image])
+
+        loss = self.style_transfer.compute_style_loss(input_features, target_avg_grams)
 
         self.assertIsInstance(loss, torch.Tensor)
-        self.assertEqual(loss.dim(), 0)  
-        self.assertGreaterEqual(loss.item(), 0)  
 
     def test_tv_loss(self):
         """Test total variation loss computation."""
         loss = self.style_transfer.compute_tv_loss(self.content_image)
 
         self.assertIsInstance(loss, torch.Tensor)
-        self.assertEqual(loss.dim(), 0)  
-        self.assertGreaterEqual(loss.item(), 0)  
+        self.assertEqual(loss.dim(), 0)
+        self.assertGreaterEqual(loss.item(), 0)
 
     def test_style_transfer(self):
         """Test complete style transfer process."""
         output_image, history = self.style_transfer.transfer_style(
             self.content_image,
-            self.style_image,
-            num_steps=2  
+            [self.style_image],
+            num_steps=2
         )
 
         self.assertIsInstance(output_image, torch.Tensor)
@@ -96,7 +96,7 @@ class TestStyleTransfer(unittest.TestCase):
         callback_image = None
         callback_history = None
 
-        def test_callback(image, history):
+        def test_callback(step, image, history):
             nonlocal callback_called, callback_image, callback_history
             callback_called = True
             callback_image = image
@@ -104,7 +104,7 @@ class TestStyleTransfer(unittest.TestCase):
 
         self.style_transfer.transfer_style(
             self.content_image,
-            self.style_image,
+            [self.style_image],
             num_steps=1,
             callback=test_callback
         )

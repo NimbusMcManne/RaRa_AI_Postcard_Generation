@@ -7,7 +7,9 @@ interface ValidationContext {
 }
 
 export class TransformerService {
-
+  /**
+   * Transform a single OAI-PMH record to normalized format
+   */
   transformRecord(record: OaiPmhRecord, context: ValidationContext): NormalizedPostcard {
     const providedCHO = record.metadata[0]['rdf:RDF'][0]['edm:ProvidedCHO'][0];
     const aggregation = record.metadata[0]['rdf:RDF'][0]['ore:Aggregation'][0];
@@ -55,6 +57,9 @@ export class TransformerService {
     return normalized;
   }
 
+  /**
+   * Separate subjects by language
+   */
   private separateSubjectsByLanguage(subjects: Array<{ '#': string; '@_': { 'xml:lang': { value: string } } }>) {
     const estonianSubjects: string[] = [];
     const englishSubjects: string[] = [];
@@ -72,12 +77,18 @@ export class TransformerService {
     return { estonianSubjects, englishSubjects };
   }
 
+  /**
+   * Find the ESTER URL from identifiers
+   */
   private findEsterUrl(identifiers: Array<{ '#': string; '@_': { 'xsi:type': { value: string } } }>): string | undefined {
     return identifiers.find(id =>
       id['#'].includes('ester.ee')
     )?.['#'];
   }
 
+  /**
+   * Extract and validate image URLs
+   */
   private extractImageUrls(aggregation: OaiPmhRecord['metadata'][0]['rdf:RDF'][0]['ore:Aggregation'][0]): {
     full: string;
     resource: string;
@@ -92,7 +103,11 @@ export class TransformerService {
     return { full, resource };
   }
 
+  /**
+   * Validate the normalized record
+   */
   private validateNormalizedRecord(record: NormalizedPostcard, context: ValidationContext): void {
+    // Validate required URLs
     if (!record.imageUrls.full || !record.imageUrls.resource) {
       context.warnings.push(`${context.identifier}: Missing required image URLs`);
     }
@@ -106,6 +121,9 @@ export class TransformerService {
     }
   }
 
+  /**
+   * Transform multiple records with error handling and warnings collection
+   */
   async transformRecords(records: any[]): Promise<any[]> {
     const transformedRecords = [];
     const warnings = [];

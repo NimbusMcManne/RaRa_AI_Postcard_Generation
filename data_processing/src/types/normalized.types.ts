@@ -1,28 +1,34 @@
+// Normalized data types
 export interface NormalizedPostcard {
+  // Core identification
   identifier: string;
   title: string;
   creator?: string;
   publisher?: string;
 
-  esterUrl?: string; 
+  // External references
+  esterUrl?: string;  // The non-digar.ee URL
   imageUrls: {
-    full: string;    
-    resource: string;
+    full: string;     // edm:isShownAt
+    resource: string; // edm:aggregatedCHO
   };
-  location?: string; 
+  location?: string;  // edm:currentLocation
 
-  subjectsEt: string[]; 
-  subjectsEn: string[]; 
+  // Subjects and categorization
+  subjectsEt: string[];  // Estonian subjects
+  subjectsEn: string[];  // English subjects
 
+  // Temporal information
+  rawDate?: string;      // Original date string, for reference
 
-  rawDate?: string; 
-
+  // Source information
   language: string;
   dataProvider: string;
   provider: string;
   rights?: string;
 
-  validationWarnings?: string[]; 
+  // Validation/Debug info
+  validationWarnings?: string[];  // Any validation issues encountered
 }
 
 export interface NormalizedHarvestResult {
@@ -35,6 +41,7 @@ export interface NormalizedHarvestResult {
   };
 }
 
+// Will be used later for period mapping
 export interface ProcessedDate {
   start: number;
   end: number;

@@ -50,6 +50,9 @@ export class OaiPmhService {
     this.endpoint = config.oaiPmhEndpoint;
   }
 
+  /**
+   * Fetches records from the OAI-PMH endpoint with retry mechanism
+   */
   private async fetchWithRetry(url: string, options: RequiredExceptBatch): Promise<string> {
     let lastError: Error | null = null;
 
@@ -70,17 +73,25 @@ export class OaiPmhService {
     throw new Error(`Failed to fetch OAI-PMH data after ${options.maxRetries} attempts: ${lastError?.message}`);
   }
 
+  /**
+   * Determines if a request should be retried based on the error
+   */
   private shouldRetry(error: AxiosError): boolean {
-    if (!error.response) return true; 
+    if (!error.response) return true; // Network errors should be retried
     const status = error.response.status;
     return status === 429 || status === 503 || (status >= 500 && status < 600);
   }
 
-
+  /**
+   * Delay helper for retry mechanism
+   */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  /**
+   * Parses XML response into a typed object
+   */
   private async parseXmlResponse(xml: string): Promise<OaiPmhResponse> {
     try {
       const result = await parseStringPromise(xml, {
@@ -113,6 +124,9 @@ export class OaiPmhService {
     }
   }
 
+  /**
+   * Constructs the OAI-PMH request URL
+   */
   private buildUrl(resumptionToken?: string): string {
     const params = new URLSearchParams();
     params.set('verb', 'ListRecords');
@@ -128,6 +142,9 @@ export class OaiPmhService {
     return url;
   }
 
+  /**
+   * Harvests records from the OAI-PMH endpoint
+   */
   async harvest(options: FetchOptions = {}): Promise<OaiPmhRecord[]> {
     const opts = { ...this.defaultOptions, ...options };
     const allRecords: OaiPmhRecord[] = [];

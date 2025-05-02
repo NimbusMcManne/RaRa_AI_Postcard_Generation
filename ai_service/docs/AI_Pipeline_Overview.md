@@ -61,7 +61,7 @@ graph TD
 - **Location:** `ai_service/src/utils/quality_metrics.py`
 - **Purpose:** Measures transformation quality
 
-### 5. Web Service (NEW!)
+### 5. Web Service
 - **Location:** `ai_service/src/api/`
 - **Main Components:**
   - FastAPI Application (`app.py`)
@@ -81,6 +81,8 @@ graph TD
 ### 1. Start the Service
 ```bash
 python src/api/app.py
+or
+uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 2. Transform an Image
@@ -107,6 +109,7 @@ Located in `ai_service/tests/test_api.py`
 
 To run automated tests:
 ```bash
+source venv/bin/activate
 pytest ai_service/tests/test_api.py -v
 ```
 
@@ -119,6 +122,7 @@ Located in `ai_service/tests/manual_test.py`
 
 To run a manual test:
 ```bash
+source venv/bin/activate
 python manual_test.py path/to/content.jpg path/to/style.jpg path/to/output.jpg
 ```
 

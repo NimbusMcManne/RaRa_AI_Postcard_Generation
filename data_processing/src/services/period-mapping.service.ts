@@ -243,12 +243,13 @@ export class PeriodMappingService {
   private readonly excludeSubjects = {
     generic: ['fotod', 'postcards', 'photographs', 'photos', 'snapshots', 'kaardid', 'cards'],
     periods: [
+      // Estonian patterns
       /\d{2}\.\s*saj(?:and)?/i,
       /\d{4}-ndad/i,
       /\d{3,4}s/i,
       /(?:esimene|teine)\s*pool/i,
       /algus|lõpp/i,
-
+      // English patterns
       /\d{4}s/i,
       /(?:first|second)\s*half/i,
       /(?:beginning|end)\s*of/i,
@@ -256,6 +257,9 @@ export class PeriodMappingService {
     ]
   };
 
+  /**
+   * Maps a raw date string to a historical period with visual verification
+   */
   mapDateToPeriod(rawDate: string, record?: NormalizedPostcard): DateMapping {
     const initialMapping = this._mapDateToPeriod(rawDate);
 
@@ -280,6 +284,9 @@ export class PeriodMappingService {
     return initialMapping;
   }
 
+  /**
+   * Determines the content category of a postcard
+   */
   categorizeContent(record: NormalizedPostcard): ContentCategory {
     const subjects = [...record.subjectsEt, ...record.subjectsEn].map(s => s.toLowerCase());
     const title = record.title.toLowerCase();
@@ -324,6 +331,9 @@ export class PeriodMappingService {
     return !this.matchesKeywords(subjects, this.categoryKeywords.photo.subjectKeywords);
   }
 
+  /**
+   * Generates period-mapped data from normalized records
+   */
   generatePeriodMappedData(records: NormalizedPostcard[]): PeriodMappedData {
     const result: PeriodMappedData = {
       metadata: {
@@ -401,6 +411,7 @@ export class PeriodMappingService {
     return /^\(\d{3}-\?\]$/.test(date);
   }
 
+  // Private helper methods for mapping dates to periods
   private mapExactYear(date: string): DateMapping {
     const year = parseInt(date);
     return {
@@ -546,6 +557,9 @@ export class PeriodMappingService {
     return distribution;
   }
 
+  /**
+   * Extract period information from subjects
+   */
   private extractPeriodFromSubjects(record: NormalizedPostcard): {
     subjectsEt: string[];
     subjectsEn: string[];
@@ -591,11 +605,17 @@ export class PeriodMappingService {
     };
   }
 
+  /**
+   * Check if a subject contains period information
+   */
   private isPeriodSubject(subject: string, language: 'et' | 'en'): boolean {
     const patterns = this.periodSubjectPatterns[language];
     return Object.values(patterns).some(pattern => pattern.test(subject));
   }
 
+  /**
+   * Extract year from a period subject
+   */
   private extractYearFromSubject(subject: string, language: 'et' | 'en'): number | undefined {
     const patterns = this.periodSubjectPatterns[language];
     let year: number | undefined;
@@ -635,6 +655,9 @@ export class PeriodMappingService {
     return undefined;
   }
 
+  /**
+   * Internal method for raw date mapping
+   */
   private _mapDateToPeriod(rawDate: string): DateMapping {
     if (!rawDate || typeof rawDate !== 'string') {
       return {
@@ -687,6 +710,9 @@ export class PeriodMappingService {
     };
   }
 
+  /**
+   * Analyze visual characteristics to verify period mapping
+   */
   private analyzeVisualCharacteristics(record: NormalizedPostcard, mapping: DateMapping): void {
     const characteristics: string[] = [];
     let suggestedPeriod: HistoricalPeriod | undefined;
@@ -732,12 +758,14 @@ export class PeriodMappingService {
     return HistoricalPeriod.STAGNATION_ERA;
   }
 
-
+  /**
+   * Temporary function to analyze all unique subjects across records
+   * Returns two arrays of unique subjects (Estonian and English)
+   */
   public analyzeAllSubjects(records: NormalizedPostcard[]): {
     subjectsEt: string[],
     subjectsEn: string[]
   } {
-
     const excludeTermsEt = [
       'postkaardid',
       'Eesti',

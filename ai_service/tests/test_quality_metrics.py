@@ -34,7 +34,7 @@ class TestQualityMetrics(unittest.TestCase):
             self.content_image
         )
         self.assertIsInstance(similarity, float)
-        self.assertGreaterEqual(similarity, 0.99) 
+        self.assertGreaterEqual(similarity, 0.99)
 
         similarity = self.metrics.compute_content_similarity(
             self.content_image,
@@ -52,7 +52,7 @@ class TestQualityMetrics(unittest.TestCase):
             self.feature_extractor
         )
         self.assertIsInstance(consistency, float)
-        self.assertGreaterEqual(consistency, 0.99) 
+        self.assertGreaterEqual(consistency, 0.99)
 
         consistency = self.metrics.compute_style_consistency(
             self.style_image,
@@ -87,17 +87,17 @@ class TestQualityMetrics(unittest.TestCase):
         """Test comprehensive quality assessment."""
         metrics = self.metrics.assess_quality(
             self.content_image,
-            self.style_image,
+            [self.style_image],
             self.transformed_image,
             self.feature_extractor
         )
 
         self.assertIn('content_similarity', metrics)
-        self.assertIn('style_consistency', metrics)
+        self.assertIn('style_consistency_avg', metrics)
 
         metrics = self.metrics.assess_quality(
             self.content_image,
-            self.style_image,
+            [self.style_image],
             self.transformed_image,
             self.feature_extractor,
             self.loss_history
@@ -118,7 +118,7 @@ class TestQualityMetrics(unittest.TestCase):
     def test_device_handling(self):
         """Test device handling in metrics computation."""
         cpu_image = torch.randn(1, 3, 64, 64)
-        gpu_image = self.content_image  
+        gpu_image = self.content_image
 
         similarity = self.metrics.compute_content_similarity(
             cpu_image,
