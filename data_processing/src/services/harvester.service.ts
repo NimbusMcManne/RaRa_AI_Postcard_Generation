@@ -27,7 +27,6 @@ export class HarvesterService {
     } = options;
 
     try {
-      // Phase 1: Fetch and store raw data
       console.log('Starting data harvest...');
       const records = await this.oaiPmh.harvest({ batchSize });
 
@@ -35,7 +34,6 @@ export class HarvesterService {
         await this.storage.saveRawHarvest(records);
       }
 
-      // Phase 2: Transform and store normalized data
       const normalizedRecords = await this.transformAndSave(records);
 
       console.log(`Harvest completed. Processed ${normalizedRecords.length} records.`);

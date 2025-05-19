@@ -7,19 +7,19 @@ export interface NormalizedPostcard {
   publisher?: string;
 
   // External references
-  esterUrl?: string;  // The non-digar.ee URL
+  esterUrl?: string;  
   imageUrls: {
-    full: string;     // edm:isShownAt
-    resource: string; // edm:aggregatedCHO
+    full: string;     
+    resource: string; 
   };
-  location?: string;  // edm:currentLocation
+  location?: string; 
 
   // Subjects and categorization
-  subjectsEt: string[];  // Estonian subjects
-  subjectsEn: string[];  // English subjects
+  subjectsEt: string[];  
+  subjectsEn: string[]; 
 
   // Temporal information
-  rawDate?: string;      // Original date string, for reference
+  rawDate?: string;    
 
   // Source information
   language: string;
@@ -28,7 +28,7 @@ export interface NormalizedPostcard {
   rights?: string;
 
   // Validation/Debug info
-  validationWarnings?: string[];  // Any validation issues encountered
+  validationWarnings?: string[];  
 }
 
 export interface NormalizedHarvestResult {
@@ -41,7 +41,6 @@ export interface NormalizedHarvestResult {
   };
 }
 
-// Will be used later for period mapping
 export interface ProcessedDate {
   start: number;
   end: number;

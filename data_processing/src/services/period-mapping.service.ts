@@ -760,7 +760,6 @@ export class PeriodMappingService {
 
   /**
    * Temporary function to analyze all unique subjects across records
-   * Returns two arrays of unique subjects (Estonian and English)
    */
   public analyzeAllSubjects(records: NormalizedPostcard[]): {
     subjectsEt: string[],

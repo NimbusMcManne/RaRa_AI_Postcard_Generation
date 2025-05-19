@@ -182,7 +182,7 @@ export const getStyleReferences = async (req: Request, res: Response, next: Next
      } else if (error instanceof SyntaxError) {
          next(new Error('Failed to parse style data file.'));
      } else {
-         next(error); // Pass other errors to the global handler
+         next(error);
      }
   }
 };
@@ -200,3 +200,38 @@ namespace random {
         return result.slice(0, k);
     }
 }
+
+export const getLocalTestStyles = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const testImagesDir = path.join(__dirname, '../../data/full_size_test_images');
+    const files = await fs.readdir(testImagesDir);
+
+    const responseDataPromises = files
+      .filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png'].includes(ext);
+      })
+      .map(async (file) => {
+        const filePath = path.join(testImagesDir, file);
+        const fileBuffer = await fs.readFile(filePath);
+        const base64Data = fileBuffer.toString('base64');
+        const ext = path.extname(file).toLowerCase();
+        const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
+        const imageDataUrl = `data:${mimeType};base64,${base64Data}`;
+
+        return {
+          id: file,
+          displayName: file,
+          imageDataUrl: imageDataUrl
+        };
+      });
+
+    const responseData = await Promise.all(responseDataPromises);
+
+    res.json({ styles: responseData });
+
+  } catch (error) {
+    console.error('Error getting local test styles:', error);
+    next(error);
+  }
+};

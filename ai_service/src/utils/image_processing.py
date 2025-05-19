@@ -16,14 +16,12 @@ class ImageProcessor:
         self.max_image_size = max_image_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Standard preprocessing for VGG network
         self.preprocess = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                               std=[0.229, 0.224, 0.225])
         ])
 
-        # Reverse preprocessing for visualization
         self.postprocess = transforms.Compose([
             transforms.Lambda(lambda x: x.mul(torch.tensor([0.229, 0.224, 0.225])
                                            .view(-1, 1, 1).to(x.device))),

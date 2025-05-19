@@ -30,10 +30,8 @@ class VGG19FeatureExtractor(nn.Module):
             'conv4_1', 'conv5_1'
         ]
 
-        # Load pretrained VGG19 model
         vgg = vgg19(weights=VGG19_Weights.IMAGENET1K_V1)
 
-        # Create feature extraction blocks
         self.blocks = nn.ModuleList()
         self.layer_map = OrderedDict()
 
@@ -41,7 +39,6 @@ class VGG19FeatureExtractor(nn.Module):
         block_count = 1
         conv_count = 1
 
-        # Map VGG layers to named blocks for feature extraction
         for layer in vgg.features:
             current_block.append(layer)
 
@@ -55,16 +52,13 @@ class VGG19FeatureExtractor(nn.Module):
                 self.layer_map[layer_name] = (len(self.blocks), len(current_block) - 1)
                 conv_count += 1
 
-        # Add final block if any layers remain
         if current_block:
             self.blocks.append(nn.Sequential(*current_block))
 
-        # Verify all requested layers exist
         missing_layers = set(self.layers) - set(self.layer_map.keys())
         if missing_layers:
             raise ValueError(f"Invalid layer names: {missing_layers}")
 
-        # Freeze model parameters
         for param in self.parameters():
             param.requires_grad = False
 
@@ -84,17 +78,13 @@ class VGG19FeatureExtractor(nn.Module):
         current_input = x
         processed_layers = set()
 
-        # Create a lookup for faster checking
         layer_indices = {name: self.layer_map[name] for name in self.layers}
-        # Determine the highest block index we need to process
         max_block_needed = max(idx for idx, _ in layer_indices.values()) if layer_indices else -1
 
-        # Iterate through VGG blocks sequentially once
         for block_idx, block in enumerate(self.blocks):
             if block_idx > max_block_needed:
                  break
 
-            # Iterate through Conv2d and MaxPool2d layers WITHIN the current block
             current_conv_in_block = 0
             for i, layer in enumerate(block):
                  current_input = layer(current_input)
@@ -102,20 +92,15 @@ class VGG19FeatureExtractor(nn.Module):
                  if isinstance(layer, nn.Conv2d):
                      current_conv_in_block += 1
                      for name, (target_block, target_conv_idx) in layer_indices.items():
-                          # target_conv_idx from layer_map corresponds to the index *within the original VGG features list*,
-                          # which resets conv count per block. Our current_conv_in_block does this too.
-                          # Find the layer_map name that corresponds to the current block_idx and conv count
                           layer_name_here = f'conv{block_idx + 1}_{current_conv_in_block}'
 
                           if name == layer_name_here and name not in processed_layers:
-                              # Correct layer found, store its output
-                              features[name] = current_input # Use current_input which is the *output* of this layer
+                              features[name] = current_input 
                               processed_layers.add(name)
 
             if len(processed_layers) == len(self.layers):
                  break
 
-        # Sanity check
         if len(features) != len(self.layers):
              missing = set(self.layers) - set(features.keys())
              logger.warning(f"Could not extract all requested features. Missing: {missing}")
@@ -149,13 +134,19 @@ class VGG19FeatureExtractor(nn.Module):
     def gram_matrix(features: torch.Tensor) -> torch.Tensor:
         """
         Compute Gram matrix for style feature representation.
+        Normalizes by the number of elements in each feature map (C*H*W).
 
         Args:
             features: Feature tensor (B x C x H x W)
 
         Returns:
-            Gram matrix (B x C x C)
+            Normalized Gram matrix (B x C x C)
         """
         batch_size, channels, height, width = features.size()
         features_reshaped = features.view(batch_size, channels, -1)
-        return torch.bmm(features_reshaped, features_reshaped.transpose(1, 2))
+        gram = torch.bmm(features_reshaped, features_reshaped.transpose(1, 2))
+
+        norm_factor = channels * height * width
+        if norm_factor > 0:
+            gram = gram / norm_factor
+        return gram

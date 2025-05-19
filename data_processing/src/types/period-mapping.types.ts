@@ -30,11 +30,11 @@ export enum ContentCategory {
 export interface VisualCharacteristics {
   // Color-related characteristics
   colorAnalysis?: {
-    dominantColors?: string[];      // RGB values
+    dominantColors?: string[]; 
     colorScheme?: 'monochrome' | 'sepia' | 'color';
-    contrast?: number;              // 0-1 scale
-    brightness?: number;            // 0-1 scale
-    saturation?: number;           // 0-1 scale
+    contrast?: number;           
+    brightness?: number;         
+    saturation?: number;       
     colorPalette?: {
       primary: string[];
       secondary: string[];
@@ -46,7 +46,7 @@ export interface VisualCharacteristics {
   compositionAnalysis?: {
     layout?: 'centered' | 'rule-of-thirds' | 'symmetric' | 'other';
     mainSubjectLocation?: { x: number; y: number };
-    complexityScore?: number;      // 0-1 scale
+    complexityScore?: number;     
     depthOfField?: 'shallow' | 'medium' | 'deep';
     perspective?: 'frontal' | 'angular' | 'aerial' | 'other';
     focusPoints?: Array<{ x: number; y: number }>;
@@ -57,10 +57,10 @@ export interface VisualCharacteristics {
     grainPattern?: string;
     printTechnique?: string;
     textureType?: string;
-    quality?: number;              // 0-1 scale
+    quality?: number;        
     degradation?: {
-      type?: string[];            // e.g., ['fading', 'scratches', 'yellowing']
-      severity?: number;          // 0-1 scale
+      type?: string[];    
+      severity?: number; 
     };
     edges?: {
       condition?: 'sharp' | 'worn' | 'damaged';
@@ -70,10 +70,10 @@ export interface VisualCharacteristics {
 
   // Style metrics
   styleMetrics?: {
-    vintage?: number;             // 0-1 score
-    clarity?: number;             // 0-1 score
-    artifactPresence?: number;    // 0-1 score
-    styleConfidence?: number;     // How confident the AI is about the style classification
+    vintage?: number;           
+    clarity?: number;            
+    artifactPresence?: number; 
+    styleConfidence?: number;
   };
 
   // Additional artistic elements
@@ -109,14 +109,14 @@ export interface PeriodMetadata {
 export interface DateMapping {
   rawDate: string;
   mappedPeriod: HistoricalPeriod;
-  potentialPeriods?: HistoricalPeriod[];  // For dates spanning multiple periods
+  potentialPeriods?: HistoricalPeriod[]; 
   confidence: 'high' | 'medium' | 'low';
   reasoning?: string;
   visualVerification?: {
     suggestedPeriod?: HistoricalPeriod;
     confidence: 'high' | 'medium' | 'low';
-    characteristics: string[];  // Visual cues that suggest this period
-    needsReview: boolean;      // Flag for cases where date and visual evidence conflict
+    characteristics: string[]; 
+    needsReview: boolean;  
   };
 }
 
@@ -133,7 +133,7 @@ export interface PeriodMappedData {
       metadata: PeriodMetadata;
       categories: {
         [key in ContentCategory]: {
-          records: string[];  // Array of postcard identifiers
+          records: string[]; 
           count: number;
           visualCharacteristics?: {
             common: {
@@ -144,7 +144,7 @@ export interface PeriodMappedData {
               artisticElements?: VisualCharacteristics['artisticElements'];
             };
             variations: {
-              [key: string]: number;  // frequency of different characteristics
+              [key: string]: number; 
             };
           };
         };

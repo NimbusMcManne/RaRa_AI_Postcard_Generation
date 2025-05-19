@@ -27,7 +27,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins!
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,28 +70,40 @@ async def root():
 @app.post("/transform")
 async def transform_image(
     content_image: UploadFile = File(...),
-    period_id: str = Form(...),
-    category_id: str = Form(...),
+    period_id: Optional[str] = Form(None),
+    category_id: Optional[str] = Form(None),
+    local_style_image_file: Optional[UploadFile] = File(None),
     style_weight: Optional[float] = Form(None),
     content_weight: Optional[float] = Form(None),
     num_steps: Optional[int] = Form(None),
-    processing_mode: str = Form("local")
+    tv_weight: Optional[float] = Form(None),
+    learning_rate: Optional[float] = Form(None),
+    saturation_enabled: Optional[bool] = Form(None),
+    saturation_factor: Optional[float] = Form(None),
+    clahe_enabled: Optional[bool] = Form(None),
+    clahe_clip_limit: Optional[float] = Form(None),
+    usm_enabled: Optional[bool] = Form(None),
+    usm_amount: Optional[float] = Form(None),
+    processing_mode: str = Form("local"),
+    ai_model_choice: str = Form("local_vgg"),
+    style_blur: Optional[bool] = Form(None)
 ):
     """
-    Transform a content image using a style selected by period and category.
+    Transform a content image using either a selected archive style or a local test style.
 
-    Args:
-        content_image: Content image file
-        period_id: ID of the selected historical period
-        category_id: ID of the selected style category
-        style_weight: Weight for style loss
-        content_weight: Weight for content loss
-        num_steps: Number of optimization steps
-        processing_mode: 'local' or 'cloud'
-
-    Returns:
-        JSON response with transformation results and output image path
+    Handles dispatching to local or cloud processing based on parameters.
     """
+    if not local_style_image_file and (not period_id or not category_id):
+        raise HTTPException(
+            status_code=422,
+            detail="Either period_id/category_id or local_style_image_file must be provided."
+        )
+    if local_style_image_file and (period_id or category_id):
+        raise HTTPException(
+            status_code=422,
+            detail="Provide EITHER period_id/category_id OR local_style_image_file, not both."
+        )
+
     try:
         process_id = str(uuid.uuid4())
         content_path = UPLOAD_DIR / f"content_{process_id}.jpg"
@@ -101,17 +113,27 @@ async def transform_image(
         with content_path.open("wb") as f:
             shutil.copyfileobj(content_image.file, f)
 
-        # Process images using IDs
-        logger.info(f"Starting transformation for period: {period_id}, category: {category_id}")
+        logger.info(f"Starting transformation for content: {content_path}")
         result = await transform_service.transform_image(
             content_path=content_path,
             period_id=period_id,
             category_id=category_id,
+            local_style_image_file=local_style_image_file,
             output_path=result_path,
             style_weight=style_weight,
             content_weight=content_weight,
             num_steps=num_steps,
-            processing_mode=processing_mode
+            tv_weight=tv_weight,
+            learning_rate=learning_rate,
+            saturation_enabled=saturation_enabled,
+            saturation_factor=saturation_factor,
+            clahe_enabled=clahe_enabled,
+            clahe_clip_limit=clahe_clip_limit,
+            usm_enabled=usm_enabled,
+            usm_amount=usm_amount,
+            processing_mode=processing_mode,
+            ai_model_choice=ai_model_choice,
+            style_blur=style_blur
         )
 
         result["result_path"] = str(result_path)
@@ -122,10 +144,13 @@ async def transform_image(
         return JSONResponse(content=result)
 
     except Exception as e:
-        logger.error(f"Transformation failed: {str(e)}")
+        logger.exception(f"Transformation failed: {str(e)}")
         if 'content_path' in locals() and content_path.exists():
-            content_path.unlink()
-        raise HTTPException(status_code=500, detail=str(e))
+            try:
+                content_path.unlink()
+            except OSError as unlink_err:
+                logger.error(f"Error removing temp content file {content_path}: {unlink_err}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @app.get("/result/{process_id}")
 async def get_result(process_id: str):

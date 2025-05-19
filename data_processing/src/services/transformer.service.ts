@@ -107,7 +107,6 @@ export class TransformerService {
    * Validate the normalized record
    */
   private validateNormalizedRecord(record: NormalizedPostcard, context: ValidationContext): void {
-    // Validate required URLs
     if (!record.imageUrls.full || !record.imageUrls.resource) {
       context.warnings.push(`${context.identifier}: Missing required image URLs`);
     }

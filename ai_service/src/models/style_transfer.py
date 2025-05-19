@@ -8,6 +8,10 @@ import torch.nn as nn
 import torch.optim as optim
 from typing import Dict, List, Tuple, Optional
 from .feature_extractor import VGG19FeatureExtractor
+import logging
+import numpy as np
+
+logger = logging.getLogger(__name__)
 
 class StyleTransfer:
     """Neural style transfer implementation."""
@@ -46,7 +50,6 @@ class StyleTransfer:
             "cuda" if torch.cuda.is_available() else "cpu"
         )
 
-        # Initialize feature extractor
         all_layers = list(set(self.content_layers + self.style_layers))
         self.feature_extractor = VGG19FeatureExtractor(layers=all_layers).to(self.device)
 
@@ -70,25 +73,24 @@ class StyleTransfer:
             input_feat = input_features[layer]
             target_feat = target_features[layer]
 
-            # Normalize loss by number of elements for stability
-            content_loss += torch.mean((input_feat - target_feat) ** 2)
+            loss = torch.mean((input_feat - target_feat) ** 2)
+            content_loss += loss
 
-        # Average loss over the content layers used
         return content_loss / len(self.content_layers)
 
     def compute_style_loss(
         self,
         input_features: Dict[str, torch.Tensor],
-        # Accept pre-computed average target Gram matrices
         target_avg_grams: Dict[str, torch.Tensor]
     ) -> torch.Tensor:
         """
         Compute style loss between input features and target average Gram matrices.
+        Assumes Gram matrices from feature_extractor are already normalized.
 
         Args:
             input_features: Features from the current input image
             target_avg_grams: Dictionary mapping style layer names to the pre-computed
-                              average Gram matrix from the style reference images.
+                              average (and normalized) Gram matrix from the style reference images.
 
         Returns:
             Style loss tensor
@@ -96,18 +98,12 @@ class StyleTransfer:
         style_loss = 0.0
         for layer in self.style_layers:
             input_feat = input_features[layer]
-            # Target is the pre-computed average Gram matrix for this layer
             target_gram = target_avg_grams[layer].detach()
-
-            # Compute Gram matrix for the current input image features
             input_gram = self.feature_extractor.gram_matrix(input_feat)
 
-            # Compute loss against the average target Gram matrix
-            # Normalize loss by number of elements in the Gram matrix for stability
-            layer_loss = torch.mean((input_gram - target_gram) ** 2)
-            style_loss += layer_loss
+            loss = torch.mean((input_gram - target_gram) ** 2)
+            style_loss += loss
 
-        # Average loss over the style layers used
         return style_loss / len(self.style_layers)
 
     def compute_tv_loss(self, image: torch.Tensor) -> torch.Tensor:
@@ -130,7 +126,6 @@ class StyleTransfer:
             raise ValueError("Style images list cannot be empty.")
 
         num_style_images = len(style_images)
-        # Store all Gram matrices for each layer in a list
         layer_grams: Dict[str, List[torch.Tensor]] = {layer: [] for layer in self.style_layers}
 
         for style_image in style_images:
@@ -140,11 +135,9 @@ class StyleTransfer:
                 gram = self.feature_extractor.gram_matrix(layer_features)
                 layer_grams[layer].append(gram.detach())
 
-        # Calculate the average Gram matrix for each layer
         avg_grams: Dict[str, torch.Tensor] = {}
         for layer in self.style_layers:
-            if layer_grams[layer]: # Check if any Gram matrices were collected for this layer
-                # Stack tensors along a new dimension (dim=0) and compute the mean
+            if layer_grams[layer]:
                 avg_grams[layer] = torch.mean(torch.stack(layer_grams[layer], dim=0), dim=0)
             else:
                 raise RuntimeError(f"Could not calculate average Gram matrix for layer {layer} - no style images processed?")
@@ -159,10 +152,12 @@ class StyleTransfer:
         content_weight: Optional[float] = None,
         style_weight: Optional[float] = None,
         tv_weight: Optional[float] = None,
+        learning_rate: float = 0.02,
         callback = None
     ) -> Tuple[torch.Tensor, Dict[str, List[float]]]:
         """
         Perform style transfer optimization using multiple style references.
+        Uses Adam optimizer.
 
         Args:
             content_image: Content image tensor
@@ -171,6 +166,7 @@ class StyleTransfer:
             content_weight: Optional override for content weight
             style_weight: Optional override for style weight
             tv_weight: Optional override for TV weight
+            learning_rate: Learning rate for the Adam optimizer.
             callback: Optional callback function for progress updates
 
         Returns:
@@ -179,81 +175,73 @@ class StyleTransfer:
         if not style_images:
              raise ValueError("Must provide at least one style image.")
 
-        # Use instance weights if not overridden
-        content_w = content_weight or self.content_weight
-        style_w = style_weight or self.style_weight
-        tv_w = tv_weight or self.tv_weight
+        content_w = content_weight if content_weight is not None else self.content_weight
+        style_w = style_weight if style_weight is not None else self.style_weight
+        tv_w = tv_weight if tv_weight is not None else self.tv_weight
 
-        # 1. Extract target content features (only once)
         target_content_features = {
             layer: self.feature_extractor(content_image)[layer].detach()
             for layer in self.content_layers
         }
-
-        # 2. Calculate target *average* style Gram matrices (only once)
         target_avg_grams = self._calculate_average_style_grams(style_images)
 
-        # Initialize input image (the one being optimized)
         input_image = content_image.clone().requires_grad_(True)
-        # Setup optimizer - LBFGS is often good for style transfer
-        optimizer = optim.LBFGS([input_image], max_iter=1) # max_iter=1 for standard loop
 
-        # Track loss history
+        optimizer = optim.Adam([input_image], lr=learning_rate)
         history = {
-            'content_loss': [],
-            'style_loss': [],
-            'tv_loss': [],
-            'total_loss': []
+            'content_loss': [], 'style_loss': [], 'tv_loss': [], 'total_loss': []
         }
-        step = [0]
 
-        # Define the optimization closure
-        def closure():
-            with torch.no_grad():
-                 input_image.clamp_(0, 1) # Assuming input is normalized 0-1 before VGG mean/std subtraction
-                 # If input_image is expected to be normalized like VGG, clamping may be obsolete.
-                 # We assume input_image is manipulated directly and needs clamping.
+        logger.info(f"Starting Adam Optimization - Steps: {num_steps}, LR: {learning_rate}")
+        logger.info(f"Initial Weights - Style: {style_w:.2e}, Content: {content_w:.2f}, TV: {tv_w:.2e}")
 
+        for i in range(num_steps):
             optimizer.zero_grad()
 
-            # Extract features from the *current* input image being optimized
             input_features = self.feature_extractor(input_image)
-
-            # Compute losses using pre-computed targets
             content_loss = self.compute_content_loss(input_features, target_content_features)
-            # Pass the average Gram matrices to style loss function
             style_loss = self.compute_style_loss(input_features, target_avg_grams)
             tv_loss = self.compute_tv_loss(input_image)
 
-            # Weighted total loss
             total_loss = (
                 content_w * content_loss +
                 style_w * style_loss +
                 tv_w * tv_loss
             )
 
-            # Backpropagate
             total_loss.backward()
 
-            # Update history
-            if step[0] < num_steps:
-                history['content_loss'].append(content_loss.item())
-                history['style_loss'].append(style_loss.item())
-                history['tv_loss'].append(tv_loss.item())
-                history['total_loss'].append(total_loss.item())
+            if input_image.grad is not None and torch.isnan(input_image.grad).any():
+                logger.error(f"NaN gradient detected at step {i}. Stopping optimization.")
+                break 
 
-            # Progress callback
+            optimizer.step()
+
+            with torch.no_grad():
+                 input_image.clamp_(0, 1)
+
+            history['content_loss'].append(content_loss.item())
+            history['style_loss'].append(style_loss.item())
+            history['tv_loss'].append(tv_loss.item())
+            history['total_loss'].append(total_loss.item())
+
+            if i % 25 == 0:
+                logger.info(f"Step {i}/{num_steps} - "
+                            f"Total Loss: {total_loss.item():.4e}, "
+                            f"Content Loss: {content_loss.item():.4e} (W: {content_w}), "
+                            f"Style Loss: {style_loss.item():.4e} (W: {style_w}), "
+                            f"TV Loss: {tv_loss.item():.4e} (W: {tv_w})")
+
             if callback:
-                callback(step[0], input_image.detach(), history)
+                callback(i, input_image.detach(), history)
 
-            step[0] += 1
-            return total_loss
-
-        while step[0] < num_steps:
-            optimizer.step(closure)
-
-        # Final clamp after optimization
         with torch.no_grad():
             input_image.clamp_(0, 1)
+
+        final_steps = len(history['total_loss'])
+        if final_steps < num_steps:
+            nan_fill = [np.nan] * (num_steps - final_steps)
+            for key in history:
+                history[key].extend(nan_fill)
 
         return input_image.detach(), history

@@ -1,17 +1,16 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
-// Type definitions based on the API structure we designed
 interface ApiCategory {
   id: string;
-  name: { en: string; et: string }; // Updated name structure
+  name: { en: string; et: string };
   hasImages: boolean;
   exampleImageUrl: string | null;
 }
 interface ApiPeriod {
   id: string;
-  name: { en: string; et: string }; // Updated name structure
-  yearRange: { start: number; end: number }; // Added year range
+  name: { en: string; et: string };
+  yearRange: { start: number; end: number };
   categories: ApiCategory[];
 }
 
@@ -21,58 +20,59 @@ export class StyleSelector extends LitElement {
     :host {
       display: block;
       padding: 16px;
+      width: 100%;
     }
     select {
       width: 100%;
+      max-width: 50%;
+      margin: 0 auto 1rem auto;
       padding: 0.5rem;
-      margin-bottom: 1rem;
       font-size: 1rem;
       border-radius: 4px;
       border: 1px solid #ccc;
     }
     .style-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Smaller grid items */
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1rem;
       padding-top: 1rem;
     }
     .style-option {
       position: relative;
-      aspect-ratio: 1 / 1.2; /* Slightly taller aspect ratio */
-      border: 2px solid #ccc; /* Default grey border */
+      aspect-ratio: 1 / 1.2;
+      border: 2px solid #ccc;
       border-radius: 8px;
       cursor: pointer;
       overflow: hidden;
       background-color: #f0f0f0;
       transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
       display: flex;
-      flex-direction: column; /* Stack image and text */
+      flex-direction: column;
       align-items: center;
-      justify-content: center; /* Center placeholder text */
+      justify-content: center;
       text-align: center;
     }
-    .style-option.disabled { /* Style removed as filtering now */
-       /* Styles for disabled (now filtered out) are removed */
+    .style-option.disabled {
     }
-    .style-option:hover { /* Adjusted hover for all visible */
+    .style-option:hover {
       transform: scale(1.03);
       border-color: #aaa;
     }
     .style-option.selected {
-      border-color: #007bff; /* Use primary color for selected */
+      border-color: #007bff;
       box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
       transform: scale(1.03);
     }
     .style-option img {
       width: 100%;
-      height: 70%; /* Allocate space for image */
+      height: 85%;
       object-fit: cover;
     }
     .style-option .placeholder {
       font-size: 0.8em;
       color: #666;
       padding: 0.5rem;
-      height: 70%; /* Match image height */
+      height: 85%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -81,13 +81,13 @@ export class StyleSelector extends LitElement {
         font-size: 0.8em;
         padding: 0.3rem;
         color: #333;
-        height: 30%; /* Allocate space for text */
+        height: 15%;
         overflow: hidden;
         text-overflow: ellipsis;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%; /* Ensure text uses full width */
+        width: 100%;
     }
     .loading, .error {
         color: #666;
@@ -169,7 +169,6 @@ export class StyleSelector extends LitElement {
       <select @change=${this._handlePeriodChange}>
         <option value="">-- Select a Period --</option>
         ${this._periods.map(period => html`
-          <!-- *** Display English name and year range *** -->
           <option value="${period.id}">
             ${period.name.en} (${period.yearRange.start}-${period.yearRange.end})
           </option>
@@ -178,7 +177,6 @@ export class StyleSelector extends LitElement {
 
       ${this._selectedPeriod ? html`
         <div class="style-grid">
-          <!-- Filter categories to only show those with images -->
           ${this._selectedPeriod.categories
             .filter(category => category.hasImages)
             .map(category => html`

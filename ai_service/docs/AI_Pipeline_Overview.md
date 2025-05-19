@@ -35,8 +35,6 @@ graph TD
     end
 ```
 
-## What We Have Built
-
 ### 1. Image Processor (Input Handler)
 - **Input:** Regular image file (jpg, png)
 - **Output:** Normalized tensor ready for AI processing
@@ -143,12 +141,6 @@ Style Consistency: 0.723
 Result saved to output.jpg
 Metrics saved to output.json
 ```
-
-## Next Steps
-1. Add period-specific style selection
-2. Implement batch processing
-3. Add result caching
-4. Optimize performance
 
 ## Simple Example
 ```python
