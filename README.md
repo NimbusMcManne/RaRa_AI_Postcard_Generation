@@ -15,8 +15,7 @@ The system consists of four main components:
 - **Node.js** (v18+ recommended) and npm for backend services
 - **Python** (3.8+) for AI service
 - **Docker** and docker-compose (optional, for containerized development)
-- 4GB+ RAM recommended (8GB+ for optimal performance)
-- GPU acceleration (optional, improves AI service performance)
+- GPU for faster processing and shorter wait times (only for local VGG implementation)
 
 ## Installation & Setup
 
