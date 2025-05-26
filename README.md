@@ -271,3 +271,7 @@ npm install
 ## License and Attribution
 
 This project was developed as part of a bachelor thesis to demonstrate AI-assisted image transformation techniques using historical postcard styles from the Digar archive.
+
+## Demo video
+
+[![Demo video](https://img.youtu.be/vi/UM3dD3bzxqw/0.jpg)](https://youtu.be/UM3dD3bzxqw)
